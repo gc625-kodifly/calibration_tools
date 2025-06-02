@@ -1,0 +1,85 @@
+FROM ros:noetic-perception-focal
+
+RUN set -e \
+ && sed -i 's|^deb .*packages\.ros\.org/ros/ubuntu|# &|' /etc/apt/sources.list.d/*.list
+
+# ─── 2.  Update (Ubuntu mirrors only) and grab curl / gnupg2 ───────────────────
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl gnupg2 ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+# ─── 3.  Import the **new** ROS GPG key and restore the repo line ──────────────
+RUN set -e \
+ && curl -fsSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+        | gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg \
+ && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
+          http://packages.ros.org/ros/ubuntu focal main" \
+      > /etc/apt/sources.list.d/ros-focal.list
+
+# ─── 4.  Normal package work now succeeds ──────────────────────────────────────
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        build-essential wget ssh vim git python3-dev \
+        libboost-python-dev python3-pip \
+ && rm -rf /var/lib/apt/lists/*
+
+# set ROS_DISTRO
+RUN apt-get update && apt-get install -y --no-install-recommends \
+       curl gnupg2 build-essential wget ssh vim git python3-dev   \
+       libboost-python-dev python3-pip kmod ros-noetic-rviz                        \
+ && rm -rf /var/lib/apt/lists/*
+
+
+    # libfmt-dev \
+    # && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install pyserial pyyaml readchar
+
+
+
+
+ARG USERNAME=kodifly
+
+# Create a non-root user and set up the environment
+RUN useradd ${USERNAME} --create-home --shell /bin/bash  && \
+    echo ${USERNAME}':newpassword' | chpasswd && \
+    chown -R ${USERNAME}:${USERNAME} /home/${USERNAME} && \
+    chmod 777 /home/${USERNAME}
+
+# Update user
+RUN echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME} \
+    && adduser ${USERNAME} video && adduser ${USERNAME} plugdev && adduser ${USERNAME} sudo
+
+
+# SSH stuff for git
+RUN mkdir -p /home/${USERNAME}/.ssh && chmod 777 /home/${USERNAME}/.ssh
+
+RUN --mount=type=secret,target=/run/secrets/host_ssh_key\
+    cp /run/secrets/host_ssh_key /home/${USERNAME}/.ssh/id_rsa
+
+RUN chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.ssh/id_rsa
+RUN ssh-keyscan github.com >> /home/${USERNAME}/.ssh/known_hosts
+
+
+SHELL ["/bin/bash", "-c"]
+USER ${USERNAME}
+
+
+WORKDIR /home/${USERNAME}
+
+COPY mvs mvs
+RUN cd mvs && sudo bash setup.sh
+
+
+RUN echo "source /home/${USERNAME}/workspace/devel/setup.bash" >> /home/${USERNAME}/.bashrc
+WORKDIR /home/${USERNAME}/workspace
+
+# add user to groups for serial access
+RUN sudo usermod -a -G tty ${USERNAME} && \
+    sudo usermod -a -G dialout ${USERNAME}
+
+RUN echo "export DISABLE_ROS1_EOL_WARNINGS=1" >> ~/.bashrc
+
+CMD ["/bin/bash"]
+

@@ -1,0 +1,14 @@
+To install the Client Camera Software  Suite in /opt/Client 
+follow these steps:
+
+  1. Gaining root privileges and input password:
+       sudo su or su root
+
+  2. Change to the directory which contains this INSTALL file, e.g.: 
+       cd ~/Client-1.0.0_x86_64
+
+  3. Running the configuration scripts source ./setup.sh
+
+ 
+  4. Execute /opt/Client/bin/Client.sh to test your cameras.
+

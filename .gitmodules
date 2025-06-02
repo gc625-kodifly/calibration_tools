@@ -1,0 +1,3 @@
+[submodule "src/LIV_handhold"]
+	path = src/LIV_handhold
+	url = https://github.com/gc625-kodifly/LIV_handhold.git

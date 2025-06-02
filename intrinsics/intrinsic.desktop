@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Camera Calibration
+Exec=/home/kodifly/smart_eye_ws/calibration/intrinsic.sh
+Icon=camera
+Terminal=false     # all logs now appear in the Zenity window
+Categories=Utility;
