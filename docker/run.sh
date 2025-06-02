@@ -13,4 +13,6 @@ docker run -it --rm --runtime=nvidia --net=host --privileged \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v $HOME/.Xauthority:/home/kodifly/.Xauthority:rw \
   -v /dev:/dev \
+  -v $HOME/Desktop/calib:/home/kodifly/calib \
   docker.io/gc625kodifly/calibration-tools:latest
+  
